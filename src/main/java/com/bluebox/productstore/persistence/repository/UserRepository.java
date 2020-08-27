@@ -13,4 +13,5 @@ public interface UserRepository extends JpaSpecificationExecutor<UserEntity>, Jp
     Optional<UserEntity> findByUsername(String username);
 
     Optional<UserEntity> findByUsernameAndPassword(String username, String password);
+    Optional<UserEntity> findById(Long id);
 }

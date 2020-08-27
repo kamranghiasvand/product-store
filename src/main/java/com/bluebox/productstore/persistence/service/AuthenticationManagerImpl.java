@@ -33,6 +33,8 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
 
     @Override
     public void register(String username, String password) throws Exception {
+        if (StringUtils.isEmpty(username)||StringUtils.isEmpty(password))
+            throw new Exception("null info");
         final Optional<UserEntity> optional = userRepository.findByUsername(username);
         if (optional.isPresent())
             throw new Exception(format("username: {0} exist", username));
