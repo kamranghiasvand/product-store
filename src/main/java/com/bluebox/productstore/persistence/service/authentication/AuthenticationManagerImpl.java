@@ -1,16 +1,14 @@
-package com.bluebox.productstore.persistence.service;
+package com.bluebox.productstore.persistence.service.authentication;
 
 import com.bluebox.productstore.persistence.entity.UserEntity;
 import com.bluebox.productstore.persistence.repository.UserRepository;
+import com.bluebox.productstore.persistence.service.authentication.AuthenticationManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static java.text.MessageFormat.format;
 
@@ -19,8 +17,8 @@ import static java.text.MessageFormat.format;
  */
 @Service
 public class AuthenticationManagerImpl implements AuthenticationManager {
-    private Map<String, String> generatedToken = new HashMap<>();
-    private Map<String, Long> createdTime = new HashMap<>();
+    private final Map<String, String> generatedToken = new HashMap<>();
+    private final Map<String, Long> createdTime = new HashMap<>();
     private final UserRepository userRepository;
 
     @Value("${security.token.expire-time: 3600000}")
@@ -32,19 +30,19 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
     }
 
     @Override
-    public void register(String username, String password) throws Exception {
-        if (StringUtils.isEmpty(username)||StringUtils.isEmpty(password))
+    public void register(String username, String password, String type) throws Exception {
+        if (StringUtils.isEmpty(username)||StringUtils.isEmpty(password)||StringUtils.isEmpty(type))
             throw new Exception("null info");
         final Optional<UserEntity> optional = userRepository.findByUsername(username);
         if (optional.isPresent())
             throw new Exception(format("username: {0} exist", username));
-        userRepository.save(new UserEntity(username, password));
+        userRepository.save(new UserEntity(username, password, type));
     }
 
     @Override
     public String login(String username, String password) throws Exception {
         final Optional<UserEntity> optional = userRepository.findByUsernameAndPassword(username, password);
-        if (!optional.isPresent())
+        if (optional.isEmpty())
             throw new Exception("user not found");
         return getToken(username);
     }
@@ -72,6 +70,19 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
             return true;
         return System.currentTimeMillis() - createTime >= expireTime;
 
+    }
+
+    @Override
+    public boolean isTokenValid(String token) {
+        return generatedToken.containsValue(token);
+    }
+
+    @Override
+    public String findUsernameWithToken(String token) {
+        ArrayList<String> list = new ArrayList<>(generatedToken.values());
+        int index = list.indexOf(token);
+        System.out.println("index : " + index);
+        return (String)generatedToken.keySet().toArray()[index];
     }
 
     private String generateNewToken(String username) {

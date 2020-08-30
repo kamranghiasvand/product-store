@@ -16,10 +16,13 @@ public class UserEntity {
     private Long id;
     private String username;
     private String password;
+    //type can be customer or seller or manager
+    private String type;
 
-    public UserEntity(String username, String password) {
+    public UserEntity(String username, String password, String type) {
         this.username = username;
         this.password = password;
+        this.type = type;
     }
 
     @Id
@@ -36,6 +39,11 @@ public class UserEntity {
     @Column(name = "password")
     public String getPassword() {
         return password;
+    }
+
+    @Column(name = "type")
+    public String getType() {
+        return type;
     }
 
 }

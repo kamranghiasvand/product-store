@@ -1,6 +1,6 @@
 package com.bluebox.productstore.rest.authenticate;
 
-import com.bluebox.productstore.persistence.service.AuthenticationManager;
+import com.bluebox.productstore.persistence.service.authentication.AuthenticationManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -28,7 +28,7 @@ public class AuthenticationController {
 
     @RequestMapping(path = "/register", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public void register(@RequestBody UserDto dto) throws Exception {
-        manager.register(dto.getUsername(), dto.getPassword());
+        manager.register(dto.getUsername(), dto.getPassword(), dto.getType());
     }
 
     @RequestMapping(path = "/login", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)

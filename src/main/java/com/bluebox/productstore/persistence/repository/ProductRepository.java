@@ -1,7 +1,6 @@
 package com.bluebox.productstore.persistence.repository;
 
 import com.bluebox.productstore.persistence.entity.ProductEntity;
-import com.bluebox.productstore.persistence.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
