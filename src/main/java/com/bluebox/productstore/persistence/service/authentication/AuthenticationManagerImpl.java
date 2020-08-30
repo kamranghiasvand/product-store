@@ -81,7 +81,6 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
     public String findUsernameWithToken(String token) {
         ArrayList<String> list = new ArrayList<>(generatedToken.values());
         int index = list.indexOf(token);
-        System.out.println("index : " + index);
         return (String)generatedToken.keySet().toArray()[index];
     }
 
@@ -91,6 +90,5 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
         createdTime.put(token, System.currentTimeMillis());
         return token;
     }
-
 
 }
