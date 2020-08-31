@@ -1,5 +1,7 @@
 package com.bluebox.productstore.persistence.service.authentication;
 
+import com.bluebox.productstore.persistence.entity.UserEntity;
+
 /**
  * @author Kamran Ghiasvand
  */
@@ -15,4 +17,6 @@ public interface AuthenticationManager {
     boolean isTokenValid(String token);
 
     String findUsernameWithToken(String token);
+
+    UserEntity getUserWithUsername(String username) throws Exception;
 }

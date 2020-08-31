@@ -91,4 +91,15 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
         return token;
     }
 
+    @Override
+    public UserEntity getUserWithUsername(String username) throws Exception {
+        Optional<UserEntity> optionalUser =  userRepository.findByUsername(username);
+
+        if (optionalUser.isEmpty()) {
+            throw new Exception("invalid username");
+        }
+
+        return optionalUser.get();
+    }
+
 }

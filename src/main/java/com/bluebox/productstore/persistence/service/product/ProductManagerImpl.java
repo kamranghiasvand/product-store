@@ -1,6 +1,7 @@
 package com.bluebox.productstore.persistence.service.product;
 
 import com.bluebox.productstore.persistence.entity.ProductEntity;
+import com.bluebox.productstore.persistence.entity.UserEntity;
 import com.bluebox.productstore.persistence.repository.ProductRepository;
 import com.bluebox.productstore.persistence.service.authentication.AuthenticationManager;
 import com.bluebox.productstore.rest.product.ProductDto;
@@ -33,6 +34,12 @@ public class ProductManagerImpl implements ProductManager{
             throw new Exception("null info");
         }
 
+        UserEntity user = authenticationManager.getUserWithUsername
+                (authenticationManager.findUsernameWithToken(dto.getToken()));
+
+        if (!user.getType().equals("seller")) {
+            throw new Exception("invalid type");
+        }
 
         ProductEntity productEntity = new ProductEntity(dto.getName(), dto.getPrice(), dto.getCompany(),
                 authenticationManager.findUsernameWithToken(dto.getToken()));
