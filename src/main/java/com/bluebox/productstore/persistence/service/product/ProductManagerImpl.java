@@ -8,7 +8,6 @@ import com.bluebox.productstore.rest.product.ProductDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
 import java.util.Optional;
 
 @Service
@@ -26,11 +25,21 @@ public class ProductManagerImpl implements ProductManager{
 
     @Override
     public String add(ProductDto dto) throws Exception {
+        checkAddErrors(dto);
+        ProductEntity productEntity = new ProductEntity(dto.getName(), dto.getPrice(), dto.getCompany(),
+                authenticationManager.findUsernameWithToken(dto.getToken()));
+        productRepository.save(productEntity);
+
+        return "" + productEntity.getId();
+
+    }
+
+    private void checkAddErrors(ProductDto dto) throws Exception {
         checkToken(dto.getToken());
 
         if (StringUtils.isEmpty(dto.getCompany())
-            || StringUtils.isEmpty(dto.getName())
-            || StringUtils.isEmpty(dto.getPrice())) {
+                || StringUtils.isEmpty(dto.getName())
+                || StringUtils.isEmpty(dto.getPrice())) {
             throw new Exception("null info");
         }
 
@@ -40,17 +49,16 @@ public class ProductManagerImpl implements ProductManager{
         if (!user.getType().equals("seller")) {
             throw new Exception("invalid type");
         }
-
-        ProductEntity productEntity = new ProductEntity(dto.getName(), dto.getPrice(), dto.getCompany(),
-                authenticationManager.findUsernameWithToken(dto.getToken()));
-        productRepository.save(productEntity);
-
-        return "" + productEntity.getId();
-
     }
 
     @Override
     public void edit(ProductDto dto) throws Exception {
+        checkEditErrors(dto);
+        Optional<ProductEntity> optionalProduct = productRepository.findById(dto.getId());
+        optionalProduct.get().setNewValueForField(dto.getField(), dto.getNewValue());
+    }
+
+    private void checkEditErrors(ProductDto dto) throws Exception {
         checkToken(dto.getToken());
 
         if (StringUtils.isEmpty(dto.getId())
@@ -69,12 +77,15 @@ public class ProductManagerImpl implements ProductManager{
         } else {
             throw new Exception("wrong product id");
         }
-
-        optionalProduct.get().setNewValueForField(dto.getField(), dto.getNewValue());
     }
 
     @Override
     public void remove(long id, String token) throws Exception {
+        checkRemoveErrors(id, token);
+        productRepository.deleteById(id);
+    }
+
+    private void checkRemoveErrors(long id, String token) throws Exception {
         checkToken(token);
 
         if (StringUtils.isEmpty(id))
@@ -91,8 +102,6 @@ public class ProductManagerImpl implements ProductManager{
         } else {
             throw new Exception("wrong product id");
         }
-
-        productRepository.deleteById(id);
     }
 
     private void checkToken(String token) throws Exception {

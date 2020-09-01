@@ -10,13 +10,13 @@ public interface AuthenticationManager {
 
     String login(String username, String password) throws Exception;
 
-    void logout(String username, String token);
-
-    boolean isTokenExpired(String token);
+    void logout(String username, String token) throws Exception;
 
     boolean isTokenValid(String token);
 
-    String findUsernameWithToken(String token);
+    String findUsernameWithToken(String token) throws Exception;
 
     UserEntity getUserWithUsername(String username) throws Exception;
+
+    boolean isTokenExpired(String context);
 }

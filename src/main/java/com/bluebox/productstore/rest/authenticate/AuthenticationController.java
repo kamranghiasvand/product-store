@@ -36,4 +36,9 @@ public class AuthenticationController {
         final String token = manager.login(dto.getUsername(), dto.getPassword());
         return new LoginResp(token, expireTime);
     }
+
+    @RequestMapping(path = "/logout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public void logout(@RequestBody UserDto dto) throws Exception {
+        manager.logout(dto.getUsername(), dto.getToken());
+    }
 }
