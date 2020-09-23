@@ -1,4 +1,4 @@
-package com.bluebox.productstore.rest.product;
+package com.bluebox.productstore.rest.product.resp;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,5 +8,5 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class AddProductResp {
-    private String id;
+    private Long id;
 }

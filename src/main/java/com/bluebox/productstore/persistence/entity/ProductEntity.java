@@ -1,13 +1,13 @@
 package com.bluebox.productstore.persistence.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
-@Table(name = "tbl_product")
+@Table(name = "product")
 @Setter
 @NoArgsConstructor
 public class ProductEntity {
@@ -15,14 +15,18 @@ public class ProductEntity {
     private Long id;
     private String name;
     private double price;
-    private String company;
-    private String seller;
+    private UserEntity seller;
+    private CompanyEntity company;
 
-    public ProductEntity(String name, double price, String company, String seller) {
+
+
+    private List<ProductEntity> carts;
+
+    public ProductEntity(String name, double price, UserEntity seller, CompanyEntity company) {
         this.name = name;
         this.price = price;
-        this.company = company;
         this.seller = seller;
+        this.company = company;
     }
 
     @Id
@@ -31,6 +35,11 @@ public class ProductEntity {
         return id;
     }
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    public CompanyEntity getCompany() {
+        return company;
+    }
 
     @Column(name = "name")
     public String getName() {
@@ -42,22 +51,19 @@ public class ProductEntity {
         return price;
     }
 
-    @Column(name = "company")
-    public String getCompany() {
-        return company;
-    }
-
-    @Column(name = "seller")
-    public String getSeller() {
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id")
+    public UserEntity getSeller() {
         return seller;
     }
 
-    public void setNewValueForField(String field, String newValue) throws Exception {
-        switch (field) {
-            case "name" -> this.name = newValue;
-            case "price" -> this.price = Double.parseDouble(newValue);
-            case "company" -> this.company = newValue;
-            default -> throw new Exception("wrong field");
-        }
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "cart_product",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "cart_id")
+    )
+    public List<ProductEntity> getCarts() {
+        return carts;
     }
 }

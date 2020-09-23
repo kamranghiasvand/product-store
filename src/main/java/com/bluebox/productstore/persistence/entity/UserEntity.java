@@ -18,11 +18,15 @@ public class UserEntity {
     private String password;
     //type can be customer or seller or manager
     private String type;
+    private double balance;
+    private CartEntity cart;
 
     public UserEntity(String username, String password, String type) {
         this.username = username;
         this.password = password;
         this.type = type;
+        if (type.equals("customer"))
+            this.balance = 1000;
     }
 
     @Id
@@ -44,6 +48,19 @@ public class UserEntity {
     @Column(name = "type")
     public String getType() {
         return type;
+    }
+
+    @Column(name = "balance")
+    public double getBalance() {
+        return balance;
+    }
+
+    @OneToOne(mappedBy = "user")
+    public CartEntity getCart() {
+        if (cart == null)
+            cart = new CartEntity();
+
+        return cart;
     }
 
 }

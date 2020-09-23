@@ -1,41 +1,56 @@
 package com.bluebox.productstore.persistence.service.product;
 
+import com.bluebox.productstore.persistence.entity.CompanyEntity;
 import com.bluebox.productstore.persistence.entity.ProductEntity;
 import com.bluebox.productstore.persistence.entity.UserEntity;
+import com.bluebox.productstore.persistence.repository.CompanyRepository;
 import com.bluebox.productstore.persistence.repository.ProductRepository;
 import com.bluebox.productstore.persistence.service.authentication.AuthenticationManager;
-import com.bluebox.productstore.rest.product.ProductDto;
+import com.bluebox.productstore.rest.product.req.AddProductReq;
+import com.bluebox.productstore.rest.product.req.EditProductNameReq;
+import com.bluebox.productstore.rest.product.req.EditProductPriceReq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
 import java.util.Optional;
 
 @Service
-public class ProductManagerImpl implements ProductManager{
+public class ProductManagerImpl implements ProductManager {
 
     private final ProductRepository productRepository;
     private final AuthenticationManager authenticationManager;
+    private final CompanyRepository companyRepository;
 
     @Autowired
-    public ProductManagerImpl(ProductRepository productRepository, AuthenticationManager authenticationManager) {
+    public ProductManagerImpl(ProductRepository productRepository, AuthenticationManager authenticationManager
+            , CompanyRepository companyRepository) {
         this.productRepository = productRepository;
         this.authenticationManager = authenticationManager;
+        this.companyRepository = companyRepository;
     }
+
 
 
     @Override
-    public String add(ProductDto dto) throws Exception {
-        checkAddErrors(dto);
-        ProductEntity productEntity = new ProductEntity(dto.getName(), dto.getPrice(), dto.getCompany(),
-                authenticationManager.findUsernameWithToken(dto.getToken()));
+    public Long add(AddProductReq req, String token) throws Exception {
+        checkAddErrors(req, token);
+        ProductEntity productEntity = new ProductEntity(req.getName(), req.getPrice(),
+                authenticationManager.getUserWithToken(token), findCompany(req.getCompany()));
+
         productRepository.save(productEntity);
 
-        return "" + productEntity.getId();
+        return productEntity.getId();
 
     }
 
-    private void checkAddErrors(ProductDto dto) throws Exception {
-        checkToken(dto.getToken());
+    private CompanyEntity findCompany(String company) {
+        return companyRepository.findByName(company).
+                orElseGet(() -> companyRepository.save(new CompanyEntity(company)));
+    }
+
+    private void checkAddErrors(AddProductReq dto, String token) throws Exception {
+        authenticationManager.checkToken(token);
 
         if (StringUtils.isEmpty(dto.getCompany())
                 || StringUtils.isEmpty(dto.getName())
@@ -44,7 +59,7 @@ public class ProductManagerImpl implements ProductManager{
         }
 
         UserEntity user = authenticationManager.getUserWithUsername
-                (authenticationManager.findUsernameWithToken(dto.getToken()));
+                (authenticationManager.findUsernameWithToken(token));
 
         if (!user.getType().equals("seller")) {
             throw new Exception("invalid type");
@@ -52,26 +67,53 @@ public class ProductManagerImpl implements ProductManager{
     }
 
     @Override
-    public void edit(ProductDto dto) throws Exception {
-        checkEditErrors(dto);
-        Optional<ProductEntity> optionalProduct = productRepository.findById(dto.getId());
-        optionalProduct.get().setNewValueForField(dto.getField(), dto.getNewValue());
+    public void remove(Long id, String token) throws Exception {
+        checkRemoveErrors(id, token);
+        productRepository.deleteById(id);
     }
 
-    private void checkEditErrors(ProductDto dto) throws Exception {
-        checkToken(dto.getToken());
+    @Override
+    public void editPrice(EditProductPriceReq req, String token) throws Exception {
+        checkEditPriceErrors(req, token);
+        Optional<ProductEntity> optionalProduct = productRepository.findById(req.getId());
+        optionalProduct.get().setPrice(req.getNewPrice());
+        productRepository.save(optionalProduct.get());
+    }
 
-        if (StringUtils.isEmpty(dto.getId())
-                || StringUtils.isEmpty(dto.getField())
-                || StringUtils.isEmpty(dto.getNewValue())) {
+    private void checkEditPriceErrors(EditProductPriceReq req, String token) throws Exception {
+        authenticationManager.checkToken(token);
+
+        if (StringUtils.isEmpty(req.getId()) || StringUtils.isEmpty(req.getNewPrice())) {
             throw new Exception("null info");
         }
 
-        Optional<ProductEntity> optionalProduct = productRepository.findById(dto.getId());
+        checkEditErrors(req.getId(), token);
+    }
+
+    @Override
+    public void editName(EditProductNameReq req, String token) throws Exception {
+        checkEditNameErrors(req, token);
+        Optional<ProductEntity> optionalProduct = productRepository.findById(req.getId());
+        optionalProduct.get().setName(req.getNewName());
+        productRepository.save(optionalProduct.get());
+    }
+
+    private void checkEditNameErrors(EditProductNameReq req, String token) throws Exception {
+        authenticationManager.checkToken(token);
+
+        if (StringUtils.isEmpty(req.getId()) || StringUtils.isEmpty(req.getNewName())) {
+            throw new Exception("null info");
+        }
+
+        checkEditErrors(req.getId(), token);
+    }
+
+    private void checkEditErrors(Long productId, String token) throws Exception {
+        Optional<ProductEntity> optionalProduct = productRepository.findById(productId);
 
         if (optionalProduct.isPresent()) {
-            String seller = authenticationManager.findUsernameWithToken(dto.getToken());
-            if (!seller.equals(optionalProduct.get().getSeller())) {
+            String seller = authenticationManager.findUsernameWithToken(token);
+            if (!optionalProduct.get().getSeller().getUsername().equals(seller)) {
                 throw new Exception("wrong seller");
             }
         } else {
@@ -79,14 +121,8 @@ public class ProductManagerImpl implements ProductManager{
         }
     }
 
-    @Override
-    public void remove(long id, String token) throws Exception {
-        checkRemoveErrors(id, token);
-        productRepository.deleteById(id);
-    }
-
-    private void checkRemoveErrors(long id, String token) throws Exception {
-        checkToken(token);
+    private void checkRemoveErrors(Long id, String token) throws Exception {
+        authenticationManager.checkToken(token);
 
         if (StringUtils.isEmpty(id))
             throw new Exception("null info");
@@ -95,24 +131,13 @@ public class ProductManagerImpl implements ProductManager{
         Optional<ProductEntity> optionalProduct = productRepository.findById(id);
 
         if (optionalProduct.isPresent()) {
-            String realSeller = optionalProduct.get().getSeller();
+            String realSeller = optionalProduct.get().getSeller().getUsername();
             if (!realSeller.equals(seller)) {
                 throw new Exception("wrong seller");
             }
         } else {
             throw new Exception("wrong product id");
         }
-    }
-
-    private void checkToken(String token) throws Exception {
-        if (StringUtils.isEmpty(token))
-            throw new Exception("null info");
-
-        if (!authenticationManager.isTokenValid(token))
-            throw new Exception("invalid token");
-
-        if (authenticationManager.isTokenExpired(token))
-            throw new Exception("expired token");
     }
 
 }

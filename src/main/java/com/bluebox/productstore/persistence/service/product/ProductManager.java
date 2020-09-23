@@ -1,11 +1,12 @@
 package com.bluebox.productstore.persistence.service.product;
 
-import com.bluebox.productstore.rest.product.ProductDto;
+import com.bluebox.productstore.rest.product.req.AddProductReq;
+import com.bluebox.productstore.rest.product.req.EditProductNameReq;
+import com.bluebox.productstore.rest.product.req.EditProductPriceReq;
 
 public interface ProductManager {
-    String add(ProductDto dto) throws Exception;
-    void edit(ProductDto id) throws Exception;
-    void remove(long id, String token) throws Exception;
-
-
+    Long add(AddProductReq dto, String token) throws Exception;
+    void remove(Long id, String token) throws Exception;
+    void editPrice(EditProductPriceReq req, String token) throws Exception;
+    void editName(EditProductNameReq req, String token) throws Exception;
 }

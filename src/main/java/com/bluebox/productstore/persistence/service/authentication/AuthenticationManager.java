@@ -1,6 +1,7 @@
 package com.bluebox.productstore.persistence.service.authentication;
 
 import com.bluebox.productstore.persistence.entity.UserEntity;
+import org.springframework.util.StringUtils;
 
 /**
  * @author Kamran Ghiasvand
@@ -18,5 +19,9 @@ public interface AuthenticationManager {
 
     UserEntity getUserWithUsername(String username) throws Exception;
 
-    boolean isTokenExpired(String context);
+    UserEntity getUserWithToken(String token) throws Exception;
+
+    boolean isTokenExpired(String context) throws Exception;
+
+    void checkToken(String token) throws Exception;
 }

@@ -45,19 +45,20 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
 
     private void checkLoginErrors(String username, String password) throws Exception {
         final Optional<UserEntity> optional = userRepository.findByUsernameAndPassword(username, password);
-        if (optional.isEmpty())
+
+        if (!optional.isPresent())
             throw new Exception("user not found");
     }
 
     @Override
     public void logout(String username, String token) throws Exception {
-        final Optional<TokenEntity> optional = tokenRepository.findByUsername(username);
+        final Optional<TokenEntity> optional = tokenRepository.findByUser(getUserWithUsername(username));
         checkLogoutErrors(optional);
         tokenRepository.delete(optional.get());
     }
 
     private void checkLogoutErrors(Optional<TokenEntity> token) throws Exception {
-        if (token.isEmpty())
+        if (!token.isPresent())
             throw new Exception("invalid token");
     }
 
@@ -71,14 +72,14 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
         if (!isTokenValid(context)) {
             throw new Exception("invalid token");
         }
-        return tokenRepository.findByContext(context).get().getUsername();
+        return tokenRepository.findByContext(context).get().getUser().getUsername();
     }
 
     @Override
     public UserEntity getUserWithUsername(String username) throws Exception {
         Optional<UserEntity> optionalUser =  userRepository.findByUsername(username);
 
-        if (optionalUser.isEmpty()) {
+        if (!optionalUser.isPresent()) {
             throw new Exception("invalid username");
         }
 
@@ -86,16 +87,38 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
     }
 
     @Override
-    public boolean isTokenExpired(String context) {
+    public UserEntity getUserWithToken(String token) throws Exception {
+        if (!isTokenValid(token)) {
+            throw new Exception("invalid token");
+        }
+        return tokenRepository.findByContext(token).get().getUser();
+    }
+
+    @Override
+    public boolean isTokenExpired(String context) throws Exception {
+        if (!tokenRepository.findByContext(context).isPresent())
+            throw new Exception("invalid token");
         return tokenRepository.findByContext(context).get().tokenExpired();
     }
 
+    @Override
+    public void checkToken(String token) throws Exception {
+        if (StringUtils.isEmpty(token))
+            throw new Exception("null info");
 
-    private String getToken(String username) {
+        if (!isTokenValid(token))
+            throw new Exception("invalid token");
 
-        Optional<TokenEntity> optionalToken = tokenRepository.findByUsername(username);
+        if (isTokenExpired(token))
+            throw new Exception("expired token");
+    }
 
-        if (optionalToken.isEmpty()) {
+
+    private String getToken(String username) throws Exception {
+
+        Optional<TokenEntity> optionalToken = tokenRepository.findByUser(getUserWithUsername(username));
+
+        if (!optionalToken.isPresent()) {
             TokenEntity token = getNewToken(username);
             return token.getContext();
         }
@@ -110,9 +133,10 @@ public class AuthenticationManagerImpl implements AuthenticationManager {
 
     }
 
-    private TokenEntity getNewToken(String username) {
-        TokenEntity token = new TokenEntity(username);
+    private TokenEntity getNewToken(String username) throws Exception {
+        TokenEntity token = new TokenEntity(getUserWithUsername(username));
         generateNewTokenContext(token);
+        tokenRepository.save(token);
         return token;
     }
 

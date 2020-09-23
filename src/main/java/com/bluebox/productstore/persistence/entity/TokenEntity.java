@@ -2,10 +2,8 @@ package com.bluebox.productstore.persistence.entity;
 
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+
+import javax.persistence.*;
 import java.util.Date;
 
 @Entity
@@ -14,11 +12,12 @@ import java.util.Date;
 @NoArgsConstructor
 public class TokenEntity {
     private String context;
-    private String username;
     private Date expireTime;
+    private UserEntity user;
+    private Long id;
 
-    public TokenEntity(String username) {
-        this.username = username;
+    public TokenEntity(UserEntity user) {
+        this.user = user;
         newTime();
     }
 
@@ -35,16 +34,20 @@ public class TokenEntity {
         return context;
     }
 
-    @Id
-    @Column(name = "username")
-    public String getUsername() {
-        return username;
-    }
-
     @Column(name = "expireTime")
     public Date getExpireTime() {
         return expireTime;
     }
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    public UserEntity getUser() {
+        return user;
+    }
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    public Long getId() {
+        return id;
+    }
 }

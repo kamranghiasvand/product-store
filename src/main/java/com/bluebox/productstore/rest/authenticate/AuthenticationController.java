@@ -4,16 +4,13 @@ import com.bluebox.productstore.persistence.service.authentication.Authenticatio
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author Kamran Ghiasvand
  */
 @RestController
-@RequestMapping("/api/authentication")
+@RequestMapping(path = "/api/authentication", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 public class AuthenticationController {
 
     private final AuthenticationManager manager;
@@ -26,19 +23,19 @@ public class AuthenticationController {
         this.manager = manager;
     }
 
-    @RequestMapping(path = "/register", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(path = "/register", method = RequestMethod.POST)
     public void register(@RequestBody UserDto dto) throws Exception {
         manager.register(dto.getUsername(), dto.getPassword(), dto.getType());
     }
 
-    @RequestMapping(path = "/login", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(path = "/login", method = RequestMethod.POST)
     public LoginResp login(@RequestBody UserDto dto) throws Exception {
         final String token = manager.login(dto.getUsername(), dto.getPassword());
         return new LoginResp(token, expireTime);
     }
 
-    @RequestMapping(path = "/logout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public void logout(@RequestBody UserDto dto) throws Exception {
-        manager.logout(dto.getUsername(), dto.getToken());
+    @RequestMapping(path = "/logout", method = RequestMethod.POST)
+    public void logout(@RequestBody LogoutReq req, @RequestHeader String token) throws Exception {
+        manager.logout(req.getUsername(), token);
     }
 }
